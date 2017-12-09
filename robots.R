@@ -10,36 +10,35 @@ input <- as.numeric(input)
 # get number of robots
 N <- length(gregexpr("\\[", raw_input)[[1]])
 
-# get initial robot state
+# set initial robot state (global variable)
 robots <- data.frame(x = input[2*(1:N) - 1], y = input[2*(1:N)])
 
 # form the command list
-cmds <- data.frame(x = input[2*((N + 1):(length(input) / 2)) - 1], 
-                   y = input[2*((N + 1):(length(input) / 2))])
+cmds <- data.frame(robot = 1:N,
+                   dx = input[2*((N + 1):(length(input) / 2)) - 1], 
+                   dy = input[2*((N + 1):(length(input) / 2))])
 
 # apply commands to robots
-robot <- 1
-res <- as.data.frame(t(apply(cmds, 1, function(vec) {
-  old <- robots
-  robots[robot, ] <<- robots[robot, ] + vec
-  occupancy <- sum(duplicated(robots))
-  j <- robot
-  robot <<- robot %% N + 1
-  return(c(j, as.numeric(t(old)), vec, as.numeric(t(robots)), occupancy))
+res <- as.data.frame(t(apply(cmds, 1, function(cmdline) {
+  robots.old <- robots
+  robots[cmdline[1], ] <<- robots[cmdline[1], ] + cmdline[2:3]  # ugh! modify global state...
+  crowd <- sum(duplicated(robots))
+  return(c(as.numeric(t(robots.old)), as.numeric(t(robots)), crowd))
 })))
-names(res) <- c("robot", paste0(c("x", "y"), rep(1:N, each = 2), "i"),
-                "dx", "dy", paste0(c("x", "y"), rep(1:N, each = 2), "f"),
-                "occupancy")
+names(res) <- c(paste0(c("x", "y"), rep(1:N, each = 2), "_i"),
+                paste0(c("x", "y"), rep(1:N, each = 2), "_f"),
+                "crowd")
 
 # final result
-cat("Number of times all robots occupy the same location =", 
-    nrow(res[res$occupancy == 2 & (res$dx != 0 | res$dy != 0), ]), "\n")
+cat("Number of times it's a crowd =", nrow(res[res$crowd == 2 & (res$dx != 0 | res$dy != 0), ]), "\n")
 
 # decode secret message
-image <- matrix(0, ncol = 47, nrow = 29)
+xres <- max(res[, 2*(1:N) - 1]) + 1
+yres <- max(res[, 2*(1:N) ]) + 1
+image <- matrix(0, ncol = xres, nrow = yres)
 for (i in 1:nrow(res)) { 
-  x <- res$x1i[i] + 1
-  y <- (28 - res$y1i[i]) + 1
-  image[y, x] <- image[y, x] + res$occupancy[i]
+  x <- res$x1_i[i] + 1
+  y <- yres - res$y1_i[i]   # flip Y
+  image[y, x] <- image[y, x] + res$crowd[i]
 }
 image(t(image), col = gray((0:256)/256))
