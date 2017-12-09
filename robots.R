@@ -30,7 +30,7 @@ names(res) <- c(paste0(c("x", "y"), rep(1:N, each = 2), "_i"),
                 "crowd")
 
 # final result
-cat("Number of times it's a crowd =", nrow(res[res$crowd == 2 & (res$dx != 0 | res$dy != 0), ]), "\n")
+cat("Number of times it's a crowd =", nrow(res[res$crowd == N - 1 & (res$dx != 0 | res$dy != 0), ]), "\n")
 
 # decode secret message
 xres <- max(res[, 2*(1:N) - 1]) + 1
