@@ -34,11 +34,13 @@ cat("Number of times it's a crowd =", nrow(res[res$crowd == N - 1 & (res$dx != 0
 
 # decode secret message
 xres <- max(res[, 2*(1:N) - 1]) + 1
-yres <- max(res[, 2*(1:N) ]) + 1
+yres <- max(res[, 2*(1:N)]) + 1
 image <- matrix(0, ncol = xres, nrow = yres)
 for (i in 1:nrow(res)) { 
-  x <- res$x1_i[i] + 1
-  y <- yres - res$y1_i[i]   # flip Y
-  image[y, x] <- image[y, x] + res$crowd[i]
+  if (res$crowd[i] > 1) {
+    x <- res$x1_i[i] + 1
+    y <- yres - res$y1_i[i]   # flip Y
+    image[y, x] <- res$crowd[i]
+  }
 }
-image(t(image), col = gray((0:256)/256))
+image(t(image), col = c("black", "gray"))
